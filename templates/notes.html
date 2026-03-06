@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Intelligence Notes — PulseWorld{% endblock %}
+{% block page_title %}Intelligence Notes{% endblock %}
+{% block page_sub %}Your personal market analysis and observations{% endblock %}
+{% block topbar_actions %}
+<button class="btn btn-primary btn-sm" onclick="openModal('note-modal')">+ New Note</button>
+{% endblock %}
+
+{% block content %}
+{% if notes %}
+<div class="grid-3 gap-16">
+  {% for n in notes %}
+  <div class="note-card">
+    <div class="note-tag {{ n.tag }}">{{ n.tag }}</div>
+    <div class="note-title">{{ n.title }}</div>
+    <div class="note-content">{{ n.content }}</div>
+    <div class="flex items-center justify-between mt-12">
+      <div class="note-date">{{ n.created_at[:16] }}</div>
+      <form method="POST" action="{{ url_for('delete_note', nid=n.id) }}">
+        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete note?')">🗑</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <div class="empty-icon">📝</div>
+    <div class="empty-text">No intelligence notes yet. Start tracking your analysis.</div>
+    <button class="btn btn-primary btn-sm mt-8" onclick="openModal('note-modal')">Create First Note</button>
+  </div>
+</div>
+{% endif %}
+
+<!-- NOTE MODAL -->
+<div class="modal-overlay" id="note-modal">
+  <div class="modal">
+    <div class="modal-title">📝 New Intelligence Note</div>
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input type="text" name="title" class="form-input" placeholder="e.g. Fed rate decision impact on tech stocks" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select name="tag" class="form-select">
+          <option value="markets">Markets</option>
+          <option value="geopolitical">Geopolitical</option>
+          <option value="institution">Institution</option>
+          <option value="general">General</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Analysis / Notes</label>
+        <textarea name="content" class="form-textarea" rows="5" placeholder="Write your intelligence analysis here..."></textarea>
+      </div>
+      <div class="flex gap-8 mt-16">
+        <button type="submit" class="btn btn-primary" style="flex:1;">Save Note</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('note-modal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function openModal(id){document.getElementById(id).classList.add('active');}
+function closeModal(id){document.getElementById(id).classList.remove('active');}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('active');}));
+</script>
+{% endblock %}

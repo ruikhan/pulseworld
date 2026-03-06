@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}Live Markets — PulseWorld{% endblock %}
+{% block page_title %}Live Markets{% endblock %}
+{% block page_sub %}Real-time global stock, crypto, forex & commodity data{% endblock %}
+{% block topbar_actions %}<span class="badge badge-green" style="animation:pulse 2s infinite;">● LIVE</span>{% endblock %}
+
+{% block content %}
+<!-- BIG TECH STOCKS -->
+<div class="card mb-16">
+  <div class="card-header">
+    <div class="card-title">🏢 Magnificent 7 + Big Finance</div>
+    <div class="card-sub">Live prices via Yahoo Finance</div>
+  </div>
+  <div class="grid-4" id="stocks-grid">
+    {% for sym,name in [('AAPL','Apple'),('MSFT','Microsoft'),('NVDA','NVIDIA'),('GOOGL','Alphabet'),('AMZN','Amazon'),('META','Meta'),('TSLA','Tesla'),('JPM','JPMorgan'),('GS','Goldman Sachs'),('BLK','BlackRock'),('TSM','TSMC'),('BABA','Alibaba')] %}
+    <div class="ticker-card" id="stk-card-{{ sym }}">
+      <div class="ticker-symbol">{{ sym }}</div>
+      <div class="ticker-name">{{ name }}</div>
+      <div class="ticker-price ticker-loading" id="stk-price-{{ sym }}">Loading...</div>
+      <div class="ticker-change" id="stk-chg-{{ sym }}"></div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- GLOBAL INDICES + CRYPTO -->
+<div class="grid-2 gap-16 mb-16">
+  <div class="card">
+    <div class="card-header"><div class="card-title">📊 Global Indices</div></div>
+    <div class="grid-2">
+      {% for sym,name in [('SPY','S&P 500'),('QQQ','NASDAQ 100'),('DIA','Dow Jones'),('EWJ','Nikkei ETF'),('FXI','China ETF'),('EWZ','Brazil ETF'),('GC=F','Gold'),('CL=F','Crude Oil')] %}
+      <div class="ticker-card" id="idx2-card-{{ loop.index }}">
+        <div class="ticker-symbol">{{ sym }}</div>
+        <div class="ticker-name">{{ name }}</div>
+        <div class="ticker-price ticker-loading" id="idx2-price-{{ loop.index }}">...</div>
+        <div class="ticker-change" id="idx2-chg-{{ loop.index }}"></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">₿ Cryptocurrency</div><span class="badge badge-green" style="font-size:.6rem;">● CoinGecko</span></div>
+    <div id="crypto-full">
+      {% for cid,sym,name in [('bitcoin','BTC','Bitcoin'),('ethereum','ETH','Ethereum'),('binancecoin','BNB','BNB'),('solana','SOL','Solana'),('ripple','XRP','Ripple'),('cardano','ADA','Cardano'),('dogecoin','DOGE','Dogecoin'),('avalanche-2','AVAX','Avalanche')] %}
+      <div class="watch-item">
+        <div class="watch-symbol">{{ sym }}</div>
+        <div class="text-sm text-dim" style="flex:1;">{{ name }}</div>
+        <div class="watch-price font-mono" id="cfull-{{ cid }}"><span class="ticker-loading">...</span></div>
+        <div class="watch-change" id="cfull-chg-{{ cid }}"></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- FOREX TABLE -->
+<div class="card mb-16">
+  <div class="card-header">
+    <div class="card-title">💱 Foreign Exchange Rates (Base: USD)</div>
+    <div class="card-sub">Via ExchangeRate-API (free)</div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Pair</th><th>Rate</th><th>Currency</th><th>Region</th></tr></thead>
+      <tbody>
+        {% for pair,name,region in [('EUR','Euro','Eurozone'),('JPY','Japanese Yen','Japan'),('GBP','British Pound','UK'),('PHP','Philippine Peso','Philippines'),('CNY','Chinese Yuan','China'),('INR','Indian Rupee','India'),('AUD','Australian Dollar','Australia'),('CAD','Canadian Dollar','Canada'),('CHF','Swiss Franc','Switzerland'),('SGD','Singapore Dollar','Singapore'),('KRW','South Korean Won','South Korea'),('BRL','Brazilian Real','Brazil')] %}
+        <tr>
+          <td class="font-mono fw-600">USD/{{ pair }}</td>
+          <td class="font-mono" id="fx-{{ pair }}"><span class="ticker-loading">...</span></td>
+          <td class="text-sm">{{ name }}</td>
+          <td class="text-sm text-dim">{{ region }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const YF_SYMBOLS_STOCKS = ['AAPL','MSFT','NVDA','GOOGL','AMZN','META','TSLA','JPM','GS','BLK','TSM','BABA'];
+const YF_SYMBOLS_IDX    = ['SPY','QQQ','DIA','EWJ','FXI','EWZ','GC=F','CL=F'];
+const CRYPTO_IDS = 'bitcoin,ethereum,binancecoin,solana,ripple,cardano,dogecoin,avalanche-2';
+
+async function fetchYF(symbol) {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=2d`;
+  const r = await fetch('https://corsproxy.io/?'+encodeURIComponent(url));
+  const d = await r.json();
+  const meta = d.chart.result[0].meta;
+  return { price: meta.regularMarketPrice, prev: meta.chartPreviousClose };
+}
+
+async function loadStocks() {
+  for (const sym of YF_SYMBOLS_STOCKS) {
+    try {
+      const {price, prev} = await fetchYF(sym);
+      const chg = ((price-prev)/prev*100);
+      const priceEl = document.getElementById('stk-price-'+sym);
+      const chgEl   = document.getElementById('stk-chg-'+sym);
+      if (priceEl) { priceEl.textContent = '$'+price.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); priceEl.className='ticker-price'; }
+      if (chgEl)   { chgEl.textContent=(chg>=0?'▲ +':'▼ ')+Math.abs(chg).toFixed(2)+'%'; chgEl.className='ticker-change '+(chg>=0?'up':'down'); }
+      if (chg < 0) document.getElementById('stk-card-'+sym)?.classList.add('negative');
+    } catch(e) { const el=document.getElementById('stk-price-'+sym); if(el){el.textContent='N/A';el.className='ticker-price text-dim';} }
+  }
+}
+
+async function loadIndices2() {
+  YF_SYMBOLS_IDX.forEach(async (sym, i) => {
+    const idx = i+1;
+    try {
+      const {price, prev} = await fetchYF(sym);
+      const chg = ((price-prev)/prev*100);
+      const priceEl = document.getElementById('idx2-price-'+idx);
+      const chgEl   = document.getElementById('idx2-chg-'+idx);
+      if (priceEl) { priceEl.textContent = price.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); priceEl.className='ticker-price'; }
+      if (chgEl)   { chgEl.textContent=(chg>=0?'▲ +':'▼ ')+Math.abs(chg).toFixed(2)+'%'; chgEl.className='ticker-change '+(chg>=0?'up':'down'); }
+      if (chg < 0) document.getElementById('idx2-card-'+idx)?.classList.add('negative');
+    } catch(e) {}
+  });
+}
+
+async function loadCryptoFull() {
+  try {
+    const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${CRYPTO_IDS}&vs_currencies=usd&include_24hr_change=true`);
+    const d = await r.json();
+    for (const [id, data] of Object.entries(d)) {
+      const el    = document.getElementById('cfull-'+id);
+      const chgEl = document.getElementById('cfull-chg-'+id);
+      if (el) el.textContent = '$'+data.usd.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:data.usd<1?6:2});
+      if (chgEl) {
+        const chg = data.usd_24h_change;
+        chgEl.textContent=(chg>=0?'+':'')+chg.toFixed(2)+'%';
+        chgEl.className='watch-change ticker-change '+(chg>=0?'up':'down');
+      }
+    }
+  } catch(e) {}
+}
+
+async function loadForexFull() {
+  try {
+    const r = await fetch('https://open.er-api.com/v6/latest/USD');
+    const d = await r.json();
+    const pairs = ['EUR','JPY','GBP','PHP','CNY','INR','AUD','CAD','CHF','SGD','KRW','BRL'];
+    for (const p of pairs) {
+      const el = document.getElementById('fx-'+p);
+      if (el && d.rates[p]) { el.textContent = d.rates[p].toLocaleString(undefined,{minimumFractionDigits:4,maximumFractionDigits:4}); el.className='font-mono'; }
+    }
+  } catch(e) {}
+}
+
+loadStocks();
+loadIndices2();
+loadCryptoFull();
+loadForexFull();
+setInterval(() => { loadStocks(); loadIndices2(); loadCryptoFull(); loadForexFull(); }, 60000);
+</script>
+{% endblock %}

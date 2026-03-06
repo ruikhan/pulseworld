@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>{% block title %}PulseWorld{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-orb">🌐</div>
+      <div>
+        <div class="brand-name">PulseWorld</div>
+        <div class="brand-tagline">Global Intelligence</div>
+      </div>
+    </div>
+    <div class="live-ticker">
+      <div class="live-dot"></div>
+      <span id="sidebar-ticker">LIVE MARKETS</span>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" data-color="{{ session.get('avatar_color','#6366f1') }}">{{ session.get('user_name','U')[0].upper() }}</div>
+      <div>
+        <div class="user-name">{{ session.get('user_name','Analyst') }}</div>
+        <div class="user-label">Intelligence Analyst</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-label">Overview</div>
+        <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint=='dashboard' %}active{% endif %}">
+          <span class="nav-icon">📡</span> Command Center
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Markets</div>
+        <a href="{{ url_for('markets') }}" class="nav-link {% if request.endpoint=='markets' %}active{% endif %}">
+          <span class="nav-icon">📈</span> Live Markets
+        </a>
+        <a href="{{ url_for('watchlist') }}" class="nav-link {% if request.endpoint=='watchlist' %}active{% endif %}">
+          <span class="nav-icon">⭐</span> My Watchlist
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Power Intelligence</div>
+        <a href="{{ url_for('institutions') }}" class="nav-link {% if request.endpoint=='institutions' %}active{% endif %}">
+          <span class="nav-icon">🏛️</span> Institutions
+        </a>
+        <a href="{{ url_for('bigtech') }}" class="nav-link {% if request.endpoint=='bigtech' %}active{% endif %}">
+          <span class="nav-icon">🏢</span> Big Tech & Finance
+        </a>
+        <a href="{{ url_for('geopolitical') }}" class="nav-link {% if request.endpoint=='geopolitical' %}active{% endif %}">
+          <span class="nav-icon">🌍</span> Geopolitical Map
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Analyst Tools</div>
+        <a href="{{ url_for('notes') }}" class="nav-link {% if request.endpoint=='notes' %}active{% endif %}">
+          <span class="nav-icon">📝</span> Intelligence Notes
+        </a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm btn-full">← Sign Out</a>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">{% block page_title %}Command Center{% endblock %}</div>
+        <div class="page-sub">{% block page_sub %}{% endblock %}</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-time" id="topbar-clock"></div>
+        {% block topbar_actions %}{% endblock %}
+      </div>
+    </div>
+    <div class="content">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</div>
+
+<script>
+// Avatar color
+document.querySelectorAll('.user-avatar[data-color]').forEach(el => {
+  el.style.background = el.dataset.color;
+});
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('topbar-clock').textContent =
+    now.toUTCString().replace('GMT','UTC').slice(0,25);
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// Sidebar ticker — cycles through live prices
+const TICKER_SYMBOLS = [
+  {s:'BTC',url:'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'},
+  {s:'ETH',url:'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'},
+];
+let tickerIdx = 0;
+async function updateSidebarTicker() {
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd');
+    const d = await r.json();
+    const items = [
+      `BTC $${d.bitcoin.usd.toLocaleString()}`,
+      `ETH $${d.ethereum.usd.toLocaleString()}`,
+    ];
+    let i = 0;
+    setInterval(() => {
+      document.getElementById('sidebar-ticker').textContent = items[i % items.length];
+      i++;
+    }, 3000);
+  } catch(e) {
+    document.getElementById('sidebar-ticker').textContent = 'MARKETS LIVE';
+  }
+}
+updateSidebarTicker();
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

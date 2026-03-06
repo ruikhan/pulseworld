@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Geopolitical Map — PulseWorld{% endblock %}
+{% block page_title %}Geopolitical Intelligence{% endblock %}
+{% block page_sub %}Global power rankings, risk assessments & economic data{% endblock %}
+
+{% block content %}
+<!-- POWER LEADERBOARD -->
+<div class="card mb-16">
+  <div class="card-header">
+    <div class="card-title">🏆 Global Power Leaderboard</div>
+    <div class="card-sub">Composite score: GDP + Military + Influence + Stability</div>
+  </div>
+  {% for c in countries | sort(attribute='power_score', reverse=True) %}
+  <div style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--border);">
+    <div class="font-mono text-dim" style="width:24px;text-align:right;font-size:.8rem;">{{ loop.index }}</div>
+    <div style="font-size:1.4rem;width:28px;">{{ c.flag }}</div>
+    <div style="flex:1;">
+      <div class="fw-600 text-sm">{{ c.country }}</div>
+      <div class="text-xs text-dim mt-2">{{ c.gdp }} GDP · {{ c.military }} Military</div>
+    </div>
+    <span class="risk-badge risk-{{ c.risk.lower().replace(' ','-').replace('/','-') }}">{{ c.risk }} Risk</span>
+    <div style="width:200px;">
+      <div class="influence-track">
+        <div class="influence-fill" style="width:{{ c.power_score }}%;"></div>
+      </div>
+    </div>
+    <div class="font-mono fw-600 text-green" style="width:36px;text-align:right;">{{ c.power_score }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- COUNTRY DETAIL CARDS -->
+<div class="grid-2 gap-16">
+  {% for c in countries %}
+  <div class="geo-card">
+    <div class="flex items-center justify-between mb-12">
+      <div>
+        <div style="font-size:2rem;">{{ c.flag }}</div>
+        <div class="geo-name mt-4">{{ c.country }}</div>
+        <div class="text-xs text-dim">{{ c.currency }} · Code: {{ c.code }}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="font-mono" style="font-size:1.8rem;font-weight:700;color:{% if c.power_score >= 90 %}var(--green){% elif c.power_score >= 80 %}var(--gold){% else %}var(--blue){% endif %};">{{ c.power_score }}</div>
+        <div class="text-xs text-dim">Power Score</div>
+        <div class="mt-4"><span class="risk-badge risk-{{ c.risk.lower().replace(' ','-').replace('/','-') }}">{{ c.risk }} Risk</span></div>
+      </div>
+    </div>
+    <div class="geo-desc">{{ c.desc }}</div>
+    <div class="geo-stats mt-12">
+      <div class="geo-stat">
+        <div class="geo-stat-v text-green">{{ c.gdp }}</div>
+        <div class="geo-stat-l">GDP</div>
+      </div>
+      <div class="geo-stat">
+        <div class="geo-stat-v text-blue">{{ c.military }}</div>
+        <div class="geo-stat-l">Military Budget</div>
+      </div>
+      <div class="geo-stat">
+        <div class="geo-stat-v">{{ c.currency }}</div>
+        <div class="geo-stat-l">Currency</div>
+      </div>
+      <div class="geo-stat">
+        <div class="geo-stat-v {% if c.stability == 'High' %}text-green{% elif c.stability == 'Low' %}text-red{% else %}text-gold{% endif %}">{{ c.stability }}</div>
+        <div class="geo-stat-l">Stability</div>
+      </div>
+    </div>
+    <div class="influence-bar mt-12">
+      <div class="influence-label"><span>Global Power Index</span><span>{{ c.power_score }}/100</span></div>
+      <div class="influence-track"><div class="influence-fill" style="width:{{ c.power_score }}%;"></div></div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

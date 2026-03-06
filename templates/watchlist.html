@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block title %}Watchlist — PulseWorld{% endblock %}
+{% block page_title %}My Watchlist{% endblock %}
+{% block page_sub %}Track your selected assets in real-time{% endblock %}
+{% block topbar_actions %}
+<button class="btn btn-primary btn-sm" onclick="openModal('add-modal')">+ Add Symbol</button>
+{% endblock %}
+
+{% block content %}
+<div class="grid-2 gap-16">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">⭐ Tracked Assets</div>
+      <div class="card-sub">{{ items|length }} symbols tracked</div>
+    </div>
+    {% if items %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Symbol</th><th>Type</th><th>Live Price</th><th>24H Change</th><th>Added</th><th></th></tr></thead>
+        <tbody>
+          {% for w in items %}
+          <tr>
+            <td class="font-mono fw-600">{{ w.symbol }}</td>
+            <td><span class="badge badge-{{ 'blue' if w.asset_type=='crypto' else 'gold' if w.asset_type=='forex' else 'green' }}">{{ w.asset_type }}</span></td>
+            <td class="font-mono" id="wlt-price-{{ w.symbol }}"><span class="ticker-loading">Loading...</span></td>
+            <td class="ticker-change" id="wlt-chg-{{ w.symbol }}"></td>
+            <td class="text-xs text-dim">{{ w.added_at[:10] }}</td>
+            <td>
+              <form method="POST" action="{{ url_for('remove_watchlist', wid=w.id) }}">
+                <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">⭐</div>
+      <div class="empty-text">No assets tracked yet. Add stocks, crypto, or forex pairs.</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-title mb-16">💡 How to Add Symbols</div>
+    <div class="text-sm" style="color:var(--text2);line-height:1.8;">
+      <div class="mb-8"><span class="badge badge-green">Stocks</span> Use Yahoo Finance tickers: <span class="font-mono">AAPL, MSFT, NVDA, JPM, GS</span></div>
+      <div class="mb-8"><span class="badge badge-blue">Crypto</span> Use symbols: <span class="font-mono">BTC, ETH, SOL, BNB, XRP</span></div>
+      <div class="mb-8"><span class="badge badge-gold">Forex</span> Use currency codes: <span class="font-mono">EUR, JPY, GBP, PHP</span></div>
+      <div class="mb-8"><span class="badge badge-purple">Commodities</span> Yahoo symbols: <span class="font-mono">GC=F (Gold), CL=F (Oil)</span></div>
+    </div>
+    <hr class="divider"/>
+    <div class="card-title mb-12">📈 Popular Picks</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      {% for sym in ['AAPL','MSFT','NVDA','TSLA','SPY','BTC','ETH','GC=F','JPM','BABA'] %}
+      <span onclick="setSymbol('{{ sym }}')" style="padding:5px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:.75rem;cursor:pointer;transition:.15s;" onmouseover="this.style.borderColor='var(--green)'" onmouseout="this.style.borderColor='var(--border2)'">{{ sym }}</span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-title">⭐ Add to Watchlist</div>
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Symbol</label>
+        <input type="text" name="symbol" id="symbol-input" class="form-input" placeholder="AAPL, BTC, EUR..." required style="text-transform:uppercase;"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Asset Type</label>
+        <select name="asset_type" class="form-select">
+          <option value="stock">Stock / ETF</option>
+          <option value="crypto">Cryptocurrency</option>
+          <option value="forex">Forex</option>
+          <option value="commodity">Commodity</option>
+        </select>
+      </div>
+      <div class="flex gap-8 mt-16">
+        <button type="submit" class="btn btn-primary" style="flex:1;">Add to Watchlist</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal('add-modal')">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const wltItems = {{ items | tojson }};
+const CRYPTO_MAP = {'BTC':'bitcoin','ETH':'ethereum','BNB':'binancecoin','SOL':'solana','XRP':'ripple','ADA':'cardano','DOGE':'dogecoin','AVAX':'avalanche-2'};
+
+async function loadWLT() {
+  for (const item of wltItems) {
+    const sym = item.symbol.toUpperCase();
+    if (item.asset_type === 'crypto' && CRYPTO_MAP[sym]) {
+      try {
+        const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${CRYPTO_MAP[sym]}&vs_currencies=usd&include_24hr_change=true`);
+        const d = await r.json();
+        const cid = CRYPTO_MAP[sym];
+        if (d[cid]) {
+          const price = d[cid].usd;
+          const chg   = d[cid].usd_24h_change;
+          const el    = document.getElementById('wlt-price-'+sym);
+          const chgEl = document.getElementById('wlt-chg-'+sym);
+          if (el) el.textContent = '$'+price.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+          if (chgEl) { chgEl.textContent=(chg>=0?'+':'')+chg.toFixed(2)+'%'; chgEl.className='ticker-change '+(chg>=0?'up':'down'); }
+        }
+      } catch(e){}
+    } else if (item.asset_type === 'forex') {
+      try {
+        const r = await fetch('https://open.er-api.com/v6/latest/USD');
+        const d = await r.json();
+        const el = document.getElementById('wlt-price-'+sym);
+        if (el && d.rates[sym]) el.textContent = d.rates[sym].toFixed(4);
+      } catch(e){}
+    } else {
+      try {
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`;
+        const r = await fetch('https://corsproxy.io/?'+encodeURIComponent(url));
+        const d = await r.json();
+        const meta = d.chart.result[0].meta;
+        const price = meta.regularMarketPrice;
+        const prev  = meta.chartPreviousClose;
+        const chg   = ((price-prev)/prev*100);
+        const el    = document.getElementById('wlt-price-'+sym);
+        const chgEl = document.getElementById('wlt-chg-'+sym);
+        if (el) el.textContent = '$'+price.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+        if (chgEl) { chgEl.textContent=(chg>=0?'+':'')+chg.toFixed(2)+'%'; chgEl.className='ticker-change '+(chg>=0?'up':'down'); }
+      } catch(e){ const el=document.getElementById('wlt-price-'+sym); if(el)el.textContent='N/A'; }
+    }
+  }
+}
+loadWLT();
+setInterval(loadWLT, 60000);
+
+function openModal(id){document.getElementById(id).classList.add('active');}
+function closeModal(id){document.getElementById(id).classList.remove('active');}
+function setSymbol(s){document.getElementById('symbol-input').value=s; openModal('add-modal');}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('active');}));
+</script>
+{% endblock %}

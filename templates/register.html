@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Register — PulseWorld</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-bg"></div>
+  <div class="auth-grid"></div>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="brand-orb">🌐</div>
+      <div>
+        <div class="brand-name" style="font-family:'Anybody',sans-serif;font-weight:800;font-size:1.1rem;">PulseWorld</div>
+        <div class="brand-tagline" style="font-size:.6rem;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;">Global Intelligence Platform</div>
+      </div>
+    </div>
+    <div class="auth-title">Join the Grid</div>
+    <div class="auth-sub">Free access to global markets and power intelligence</div>
+    {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" name="name" class="form-input" placeholder="Your name" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" name="email" class="form-input" placeholder="analyst@example.com" required/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-input" placeholder="••••••••" required minlength="6"/>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full mt-8">Create Account →</button>
+    </form>
+    <div class="auth-footer">
+      Already registered? <a href="{{ url_for('login') }}">Sign in</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

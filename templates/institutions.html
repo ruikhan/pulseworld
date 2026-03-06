@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Institutions — PulseWorld{% endblock %}
+{% block page_title %}Power Institutions{% endblock %}
+{% block page_sub %}The organizations that control the global financial system{% endblock %}
+
+{% block content %}
+<div class="grid-2 gap-16 mb-16">
+  <div class="card" style="background:linear-gradient(135deg,var(--surface),var(--surface2));border-color:var(--border2);">
+    <div class="font-display fw-700 mb-8" style="font-size:1.3rem;">🏛️ Who really runs the world?</div>
+    <div class="text-sm" style="color:var(--text2);line-height:1.8;">
+      A small cluster of institutions — central banks, multilateral lenders, and asset managers — collectively influence the flow of trillions of dollars, set the rules of global trade, and determine the economic fate of nations. Understanding them is understanding real power.
+    </div>
+  </div>
+  <div class="grid-2">
+    {% for label, val, color in [('Total Assets Tracked','$35T+','var(--green)'),('Countries Influenced','189','var(--blue)'),('Avg Influence Score','93/100','var(--gold)'),('Years of Combined History','750+','var(--purple)')] %}
+    <div class="stat-card">
+      <div class="stat-value" style="color:{{ color }};">{{ val }}</div>
+      <div class="stat-label">{{ label }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="grid-2 gap-16">
+  {% for inst in institutions %}
+  <div class="inst-card">
+    <div class="inst-header">
+      <div class="inst-badge" style="background:{{ inst.color }};">{{ inst.abbr }}</div>
+      <div style="flex:1;">
+        <div class="inst-name">{{ inst.flag }} {{ inst.name }}</div>
+        <div class="inst-type">{{ inst.type }} · Founded {{ inst.founded }}</div>
+      </div>
+      <div class="power-score power-{% if inst.influence >= 90 %}high{% elif inst.influence >= 80 %}medium{% else %}low{% endif %}">
+        ⚡ {{ inst.influence }}
+      </div>
+    </div>
+    <div class="inst-desc">{{ inst.desc }}</div>
+    <div class="influence-bar">
+      <div class="influence-label"><span>Global Influence</span><span>{{ inst.influence }}/100</span></div>
+      <div class="influence-track"><div class="influence-fill" style="width:{{ inst.influence }}%;background:{{ inst.color }};"></div></div>
+    </div>
+    <div class="inst-meta mt-12">
+      <span class="inst-tag">💰 {{ inst.assets }}</span>
+      <span class="inst-tag">🌍 {{ inst.country }}</span>
+    </div>
+    <div style="margin-top:12px;padding:10px 12px;background:var(--surface2);border-radius:8px;border-left:2px solid {{ inst.color }};">
+      <div class="text-xs text-dim mb-4">LATEST ACTION</div>
+      <div class="text-sm">{{ inst.latest_action }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

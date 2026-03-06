@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% block title %}Command Center — PulseWorld{% endblock %}
+{% block page_title %}Command Center{% endblock %}
+{% block page_sub %}Live global intelligence feed{% endblock %}
+{% block topbar_actions %}
+<span class="badge badge-green" style="animation:pulse 2s infinite;">● LIVE</span>
+{% endblock %}
+
+{% block content %}
+<!-- TOP ROW: KEY MARKET INDICES -->
+<div class="grid-5 mb-16" id="indices-row">
+  {% for sym,name in [('SPY','S&P 500'),('QQQ','NASDAQ'),('DIA','Dow Jones'),('GC=F','Gold'),('CL=F','Oil')] %}
+  <div class="ticker-card" id="idx-{{ loop.index }}">
+    <div class="ticker-symbol">{{ sym }}</div>
+    <div class="ticker-name">{{ name }}</div>
+    <div class="ticker-price ticker-loading" id="price-idx-{{ loop.index }}">Loading...</div>
+    <div class="ticker-change" id="chg-idx-{{ loop.index }}"></div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="grid-3 gap-16 mb-16">
+  <!-- CRYPTO ROW -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">₿ Crypto Markets</div>
+      <span class="badge badge-green" style="font-size:.6rem;">● LIVE</span>
+    </div>
+    <div id="crypto-list">
+      {% for cid,sym in [('bitcoin','BTC'),('ethereum','ETH'),('binancecoin','BNB'),('solana','SOL'),('ripple','XRP')] %}
+      <div class="watch-item">
+        <div class="watch-symbol">{{ sym }}</div>
+        <div class="text-sm text-dim">{{ cid|title }}</div>
+        <div class="watch-price" id="crypto-{{ cid }}"><span class="ticker-loading">...</span></div>
+        <div class="watch-change" id="crypto-chg-{{ cid }}"></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- FOREX -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">💱 Forex Rates</div>
+      <span class="badge badge-green" style="font-size:.6rem;">● LIVE</span>
+    </div>
+    <div id="forex-list">
+      {% for pair in ['EUR','JPY','GBP','PHP','CNY','INR','AUD','CAD'] %}
+      <div class="watch-item">
+        <div class="watch-symbol">USD/{{ pair }}</div>
+        <div class="watch-price" id="forex-{{ pair }}"><span class="ticker-loading">...</span></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- NEWS FEED -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">📰 Intelligence Feed</div>
+      <a href="https://finance.yahoo.com" target="_blank" class="btn btn-secondary btn-sm">Full Feed</a>
+    </div>
+    <div id="news-feed">
+      <!-- Static curated headlines — updated on deploy -->
+      {% for item in [
+        ('Federal Reserve signals pause in rate cuts amid sticky inflation','Reuters','Markets'),
+        ('China launches $1T infrastructure investment wave across Southeast Asia','Bloomberg','Geopolitical'),
+        ('NVIDIA crosses $3T market cap on surging AI chip demand','CNBC','Big Tech'),
+        ('IMF warns of rising debt risks in emerging markets 2025','FT','Institutions'),
+        ('BlackRock and Vanguard now own 15%+ of S&P 500 companies','WSJ','Finance'),
+        ('EU passes landmark AI Act — global tech firms must comply by 2026','Reuters','Regulation'),
+        ('Saudi Arabia increases oil production ahead of OPEC+ meeting','Bloomberg','Commodities'),
+        ('JPMorgan raises recession probability to 35% for late 2025','CNBC','Markets'),
+      ] %}
+      <div class="news-item">
+        <div class="news-source"><span class="news-tag">{{ item[2] }}</span>{{ item[1] }}</div>
+        <div class="news-title">{{ item[0] }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="grid-2 gap-16 mb-16">
+  <!-- POWER INDEX -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">⚡ Global Power Index</div>
+      <a href="{{ url_for('institutions') }}" class="btn btn-secondary btn-sm">Full View</a>
+    </div>
+    {% for inst in [
+      ('FED','Federal Reserve', 98, '#1d4ed8'),
+      ('IMF','Intl Monetary Fund', 96, '#0891b2'),
+      ('BIS','Bank for Intl Settlements', 95, '#7c3aed'),
+      ('WB','World Bank', 94, '#059669'),
+      ('ECB','European Central Bank', 93, '#2563eb'),
+      ('BLK','BlackRock', 92, '#1f2937'),
+    ] %}
+    <div style="margin-bottom:12px;">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-8">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;color:{{ inst[3] }};background:{{ inst[3] }}22;padding:2px 7px;border-radius:5px;">{{ inst[0] }}</span>
+          <span class="text-sm">{{ inst[1] }}</span>
+        </div>
+        <span class="font-mono text-xs text-dim">{{ inst[2] }}/100</span>
+      </div>
+      <div class="influence-track">
+        <div class="influence-fill" style="width:{{ inst[2] }}%;background:{{ inst[3] }};"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- WATCHLIST PREVIEW + GEOPOLITICAL RISK -->
+  <div class="flex flex-col gap-16">
+    <div class="card" style="flex:1;">
+      <div class="card-header">
+        <div class="card-title">⭐ My Watchlist</div>
+        <a href="{{ url_for('watchlist') }}" class="btn btn-secondary btn-sm">Manage</a>
+      </div>
+      {% if watchlist %}
+        {% for w in watchlist[:5] %}
+        <div class="watch-item">
+          <div class="watch-symbol">{{ w.symbol }}</div>
+          <span class="badge badge-{{ 'blue' if w.asset_type == 'crypto' else 'gold' if w.asset_type == 'forex' else 'green' }}">{{ w.asset_type }}</span>
+          <div class="watch-price" id="wl-{{ w.symbol }}"><span class="ticker-loading">...</span></div>
+          <div class="watch-change" id="wl-chg-{{ w.symbol }}"></div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">⭐</div>
+          <div class="empty-text">No watchlist items yet</div>
+          <a href="{{ url_for('watchlist') }}" class="btn btn-secondary btn-sm mt-8">Add Symbols</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="card" style="flex:1;">
+      <div class="card-header">
+        <div class="card-title">🌍 Geopolitical Risk</div>
+        <a href="{{ url_for('geopolitical') }}" class="btn btn-secondary btn-sm">Full Map</a>
+      </div>
+      {% for c,risk,score in [('🇺🇸 USA','Low',99),('🇨🇳 China','Medium',94),('🇷🇺 Russia','High',78),('🇮🇳 India','Low-Medium',80),('🇪🇺 EU','Low',88)] %}
+      <div class="flex items-center justify-between" style="padding:7px 0; border-bottom:1px solid var(--border);">
+        <div class="text-sm">{{ c }}</div>
+        <div class="flex items-center gap-8">
+          <span class="risk-badge risk-{{ risk.lower().replace(' ','-') }}">{{ risk }}</span>
+          <span class="font-mono text-xs text-dim">{{ score }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- NOTES PREVIEW -->
+{% if recent_notes %}
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">📝 Recent Intelligence Notes</div>
+    <a href="{{ url_for('notes') }}" class="btn btn-secondary btn-sm">All Notes</a>
+  </div>
+  <div class="grid-3">
+    {% for n in recent_notes %}
+    <div class="note-card">
+      <div class="note-tag {{ n.tag }}">{{ n.tag }}</div>
+      <div class="note-title">{{ n.title }}</div>
+      <div class="note-content">{{ n.content[:100] if n.content else '' }}{% if n.content and n.content|length > 100 %}...{% endif %}</div>
+      <div class="note-date">{{ n.created_at[:16] }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── COINGECKO CRYPTO (free, no key) ──────────────────────
+async function loadCrypto() {
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin,solana,ripple&vs_currencies=usd&include_24hr_change=true');
+    const d = await r.json();
+    const map = {bitcoin:'BTC',ethereum:'ETH',binancecoin:'BNB',solana:'SOL',ripple:'XRP'};
+    for (const [id, sym] of Object.entries(map)) {
+      if (!d[id]) continue;
+      const price = d[id].usd;
+      const chg   = d[id].usd_24h_change;
+      const el    = document.getElementById('crypto-'+id);
+      const chgEl = document.getElementById('crypto-chg-'+id);
+      if (el) el.textContent = '$'+price.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+      if (chgEl) {
+        chgEl.textContent = (chg>=0?'+':'')+chg.toFixed(2)+'%';
+        chgEl.className = 'watch-change ticker-change '+(chg>=0?'up':'down');
+      }
+    }
+  } catch(e) { console.log('Crypto load error:', e); }
+}
+
+// ── EXCHANGERATE FOREX (free, no key) ────────────────────
+async function loadForex() {
+  try {
+    const r = await fetch('https://open.er-api.com/v6/latest/USD');
+    const d = await r.json();
+    const pairs = ['EUR','JPY','GBP','PHP','CNY','INR','AUD','CAD'];
+    for (const pair of pairs) {
+      const el = document.getElementById('forex-'+pair);
+      if (el && d.rates && d.rates[pair]) {
+        el.textContent = d.rates[pair].toFixed(pair==='JPY'?2:4);
+        el.className = 'watch-price font-mono';
+      }
+    }
+  } catch(e) { console.log('Forex error:', e); }
+}
+
+// ── YAHOO FINANCE via CORS proxy for stock indices ────────
+async function loadIndex(symbol, priceId, chgId, cardId) {
+  try {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=2d`;
+    const r = await fetch('https://corsproxy.io/?'+encodeURIComponent(url));
+    const d = await r.json();
+    const meta = d.chart.result[0].meta;
+    const price = meta.regularMarketPrice;
+    const prev  = meta.chartPreviousClose;
+    const chg   = ((price-prev)/prev*100);
+    document.getElementById(priceId).textContent = price.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+    document.getElementById(priceId).className = 'ticker-price';
+    const chgEl = document.getElementById(chgId);
+    chgEl.textContent = (chg>=0?'▲ +':'▼ ')+Math.abs(chg).toFixed(2)+'%';
+    chgEl.className = 'ticker-change '+(chg>=0?'up':'down');
+    if (chg < 0) document.getElementById(cardId).classList.add('negative');
+  } catch(e) {
+    document.getElementById(priceId).textContent = 'N/A';
+    document.getElementById(priceId).className = 'ticker-price text-dim';
+  }
+}
+
+// ── WATCHLIST prices ──────────────────────────────────────
+const watchlistItems = {{ watchlist | tojson }};
+async function loadWatchlistPrices() {
+  if (!watchlistItems.length) return;
+  const cryptoIds = {'BTC':'bitcoin','ETH':'ethereum','BNB':'binancecoin','SOL':'solana','XRP':'ripple','ADA':'cardano','DOGE':'dogecoin'};
+  for (const item of watchlistItems) {
+    const sym = item.symbol.toUpperCase();
+    if (item.asset_type === 'crypto' && cryptoIds[sym]) {
+      try {
+        const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoIds[sym]}&vs_currencies=usd&include_24hr_change=true`);
+        const d = await r.json();
+        const cid = cryptoIds[sym];
+        if (d[cid]) {
+          const el = document.getElementById('wl-'+sym);
+          const chgEl = document.getElementById('wl-chg-'+sym);
+          if (el) el.textContent = '$'+d[cid].usd.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+          if (chgEl) {
+            const chg = d[cid].usd_24h_change;
+            chgEl.textContent = (chg>=0?'+':'')+chg.toFixed(2)+'%';
+            chgEl.className = 'watch-change ticker-change '+(chg>=0?'up':'down');
+          }
+        }
+      } catch(e){}
+    } else {
+      // Stock
+      try {
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=2d`;
+        const r = await fetch('https://corsproxy.io/?'+encodeURIComponent(url));
+        const d = await r.json();
+        const meta = d.chart.result[0].meta;
+        const price = meta.regularMarketPrice;
+        const prev  = meta.chartPreviousClose;
+        const chg   = ((price-prev)/prev*100);
+        const el = document.getElementById('wl-'+sym);
+        const chgEl = document.getElementById('wl-chg-'+sym);
+        if (el) el.textContent = '$'+price.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+        if (chgEl) {
+          chgEl.textContent = (chg>=0?'+':'')+chg.toFixed(2)+'%';
+          chgEl.className = 'watch-change ticker-change '+(chg>=0?'up':'down');
+        }
+      } catch(e){}
+    }
+  }
+}
+
+// Load all
+loadCrypto();
+loadForex();
+loadWatchlistPrices();
+loadIndex('SPY','price-idx-1','chg-idx-1','idx-1');
+loadIndex('QQQ','price-idx-2','chg-idx-2','idx-2');
+loadIndex('DIA','price-idx-3','chg-idx-3','idx-3');
+loadIndex('GC=F','price-idx-4','chg-idx-4','idx-4');
+loadIndex('CL=F','price-idx-5','chg-idx-5','idx-5');
+
+// Auto-refresh every 60s
+setInterval(() => { loadCrypto(); loadForex(); }, 60000);
+</script>
+{% endblock %}

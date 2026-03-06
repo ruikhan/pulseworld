@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}Big Tech & Finance — PulseWorld{% endblock %}
+{% block page_title %}Big Tech & Finance{% endblock %}
+{% block page_sub %}The corporations that shape the digital and financial world{% endblock %}
+{% block topbar_actions %}<span class="badge badge-green" style="animation:pulse 2s infinite;">● LIVE PRICES</span>{% endblock %}
+
+{% block content %}
+<div class="grid-3 gap-16">
+  {% for co in companies %}
+  <div class="inst-card">
+    <div class="inst-header">
+      <div class="inst-badge" style="background:{{ co.color }};">{{ co.symbol[:4] }}</div>
+      <div style="flex:1;">
+        <div class="inst-name">{{ co.flag }} {{ co.name }}</div>
+        <div class="inst-type">{{ co.sector }}</div>
+      </div>
+      <div class="power-score power-{% if co.influence >= 90 %}high{% elif co.influence >= 80 %}medium{% else %}low{% endif %}">
+        ⚡ {{ co.influence }}
+      </div>
+    </div>
+    <div class="inst-desc">{{ co.desc }}</div>
+
+    <!-- Live Price -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg2);border-radius:8px;margin-bottom:10px;">
+      <div>
+        <div class="text-xs text-dim mb-2">LIVE PRICE</div>
+        <div class="font-mono fw-600" id="bt-price-{{ co.symbol }}" style="font-size:1rem;"><span class="ticker-loading">Loading...</span></div>
+      </div>
+      <div style="text-align:right;">
+        <div class="text-xs text-dim mb-2">24H CHANGE</div>
+        <div class="ticker-change" id="bt-chg-{{ co.symbol }}"></div>
+      </div>
+    </div>
+
+    <div class="inst-meta">
+      <span class="inst-tag">💰 {{ co.market_cap }}</span>
+      <span class="inst-tag">👥 {{ co.employees }}</span>
+      <span class="inst-tag">🌍 {{ co.country }}</span>
+    </div>
+    <div class="influence-bar mt-12">
+      <div class="influence-label"><span>Market Power</span><span>{{ co.influence }}/100</span></div>
+      <div class="influence-track"><div class="influence-fill" style="width:{{ co.influence }}%;background:{{ co.color }};"></div></div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const BT_SYMBOLS = {{ companies | map(attribute='symbol') | list | tojson }};
+async function loadBigTech() {
+  for (const sym of BT_SYMBOLS) {
+    try {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=1d&range=2d`;
+      const r = await fetch('https://corsproxy.io/?'+encodeURIComponent(url));
+      const d = await r.json();
+      const meta = d.chart.result[0].meta;
+      const price = meta.regularMarketPrice;
+      const prev  = meta.chartPreviousClose;
+      const chg   = ((price-prev)/prev*100);
+      const priceEl = document.getElementById('bt-price-'+sym);
+      const chgEl   = document.getElementById('bt-chg-'+sym);
+      if (priceEl) { priceEl.textContent = '$'+price.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); priceEl.className='font-mono fw-600'; }
+      if (chgEl)   { chgEl.textContent=(chg>=0?'▲ +':'▼ ')+Math.abs(chg).toFixed(2)+'%'; chgEl.className='ticker-change '+(chg>=0?'up':'down'); }
+    } catch(e) {
+      const el = document.getElementById('bt-price-'+sym);
+      if (el) { el.textContent='N/A'; el.className='font-mono text-dim'; }
+    }
+  }
+}
+loadBigTech();
+setInterval(loadBigTech, 60000);
+</script>
+{% endblock %}
