@@ -8,27 +8,34 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
+<!-- GLOBAL SCANLINES HANDLED BY CSS body::after -->
+<!-- CORNER DECOR -->
+<div class="bg-ambient"></div>
+
 <div class="app-layout">
-  <!-- SIDEBAR -->
+  <!-- ── SIDEBAR ── -->
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="brand-orb">🌐</div>
       <div>
         <div class="brand-name">PulseWorld</div>
-        <div class="brand-tagline">Global Intelligence</div>
+        <div class="brand-tag">GLOBAL INTELLIGENCE</div>
       </div>
     </div>
-    <div class="live-ticker">
-      <div class="live-dot"></div>
-      <span id="sidebar-ticker">LIVE MARKETS</span>
+
+    <div class="live-status">
+      <div class="ldot"></div>
+      <span id="sidebar-tick">MARKETS LIVE</span>
     </div>
+
     <div class="sidebar-user">
-      <div class="user-avatar" data-color="{{ session.get('avatar_color','#6366f1') }}">{{ session.get('user_name','U')[0].upper() }}</div>
+      <div class="user-avatar" data-color="{{ session.get('avatar_color','#f0a500') }}">{{ session.get('user_name','A')[0].upper() }}</div>
       <div>
         <div class="user-name">{{ session.get('user_name','Analyst') }}</div>
-        <div class="user-label">Intelligence Analyst</div>
+        <div class="user-role">INTELLIGENCE ANALYST</div>
       </div>
     </div>
+
     <nav class="sidebar-nav">
       <div class="nav-section">
         <div class="nav-label">Overview</div>
@@ -46,7 +53,7 @@
         </a>
       </div>
       <div class="nav-section">
-        <div class="nav-label">Power Intelligence</div>
+        <div class="nav-label">Power Intel</div>
         <a href="{{ url_for('institutions') }}" class="nav-link {% if request.endpoint=='institutions' %}active{% endif %}">
           <span class="nav-icon">🏛️</span> Institutions
         </a>
@@ -60,20 +67,27 @@
       <div class="nav-section">
         <div class="nav-label">Analyst Tools</div>
         <a href="{{ url_for('notes') }}" class="nav-link {% if request.endpoint=='notes' %}active{% endif %}">
-          <span class="nav-icon">📝</span> Intelligence Notes
+          <span class="nav-icon">📝</span> Intel Notes
         </a>
       </div>
     </nav>
+
+    <!-- SIDEBAR FOOTER W/ DEVELOPER CREDIT -->
     <div class="sidebar-footer">
-      <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm btn-full">← Sign Out</a>
+      <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-sm btn-full sidebar-signout">⇐ Sign Out</a>
+      <div class="sidebar-dev-credit">
+        <div class="sidebar-dev-label">Developer</div>
+        <div class="sidebar-dev-name">Justine Villarosa</div>
+        <div class="sidebar-dev-role">Software Engineer</div>
+      </div>
     </div>
   </aside>
 
-  <!-- MAIN -->
+  <!-- ── MAIN ── -->
   <main class="main">
     <div class="topbar">
       <div>
-        <div class="page-title">{% block page_title %}Command Center{% endblock %}</div>
+        <div class="page-title">{% block page_title %}COMMAND CENTER{% endblock %}</div>
         <div class="page-sub">{% block page_sub %}{% endblock %}</div>
       </div>
       <div class="topbar-right">
@@ -81,51 +95,52 @@
         {% block topbar_actions %}{% endblock %}
       </div>
     </div>
+
     <div class="content">
       {% block content %}{% endblock %}
+    </div>
+
+    <!-- PAGE FOOTER -->
+    <div class="page-footer">
+      <div class="page-footer-left">
+        PULSEWORLD INTELLIGENCE PLATFORM &nbsp;·&nbsp; DATA VIA YAHOO FINANCE · COINGECKO · EXCHANGERATE-API
+      </div>
+      <div class="page-footer-right">
+        Need help? Contact our Developer:
+        <a href="mailto:justine.villarosa@unc.edu.ph" class="page-footer-link">Justine Villarosa</a>
+      </div>
     </div>
   </main>
 </div>
 
 <script>
 // Avatar color
-document.querySelectorAll('.user-avatar[data-color]').forEach(el => {
-  el.style.background = el.dataset.color;
-});
+document.querySelectorAll('.user-avatar[data-color]').forEach(el=>{el.style.background=el.dataset.color;});
 
-// Clock
-function updateClock() {
-  const now = new Date();
-  document.getElementById('topbar-clock').textContent =
-    now.toUTCString().replace('GMT','UTC').slice(0,25);
+// UTC Clock
+function tick(){
+  const n=new Date();
+  const el=document.getElementById('topbar-clock');
+  if(el)el.textContent=n.toISOString().replace('T',' ').slice(0,19)+' UTC';
 }
-updateClock();
-setInterval(updateClock, 1000);
+tick(); setInterval(tick,1000);
 
-// Sidebar ticker — cycles through live prices
-const TICKER_SYMBOLS = [
-  {s:'BTC',url:'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'},
-  {s:'ETH',url:'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd'},
-];
-let tickerIdx = 0;
-async function updateSidebarTicker() {
-  try {
-    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd');
-    const d = await r.json();
-    const items = [
+// Sidebar live ticker — cycles crypto prices
+async function sidebarTicker(){
+  try{
+    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd');
+    const d=await r.json();
+    const items=[
       `BTC $${d.bitcoin.usd.toLocaleString()}`,
       `ETH $${d.ethereum.usd.toLocaleString()}`,
+      'MARKETS LIVE',
     ];
-    let i = 0;
-    setInterval(() => {
-      document.getElementById('sidebar-ticker').textContent = items[i % items.length];
-      i++;
-    }, 3000);
-  } catch(e) {
-    document.getElementById('sidebar-ticker').textContent = 'MARKETS LIVE';
-  }
+    let i=0;
+    document.getElementById('sidebar-tick').textContent=items[0];
+    setInterval(()=>{i=(i+1)%items.length;document.getElementById('sidebar-tick').textContent=items[i];},3500);
+  }catch(e){document.getElementById('sidebar-tick').textContent='MARKETS LIVE';}
 }
-updateSidebarTicker();
+sidebarTicker();
 </script>
 {% block scripts %}{% endblock %}
 </body>
