@@ -3,43 +3,105 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Register — PulseWorld</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+<title>PulseWorld — Create Account</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --font-display:'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --font-body:'SF Pro Text',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  --font-mono:'SF Mono','Fira Code',ui-monospace,monospace;
+  --bg:#04080f;--bg2:#080e1a;
+  --surface:rgba(12,18,32,0.85);--surface2:rgba(8,14,24,0.6);
+  --border:rgba(255,255,255,0.08);--border2:rgba(240,165,0,0.35);
+  --amber:#f0a500;--green:#30d158;--red:#ff453a;
+  --text:rgba(255,255,255,0.92);--text2:rgba(255,255,255,0.45);--text3:rgba(255,255,255,0.22);
+}
+html,body{min-height:100vh;font-family:var(--font-body);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden;}
+.bg-mesh{position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 900px 600px at 15% 80%,rgba(240,165,0,.055) 0%,transparent 70%),radial-gradient(ellipse 700px 500px at 85% 20%,rgba(48,209,88,.04) 0%,transparent 65%);}
+.bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);background-size:52px 52px;}
+.card-wrap{position:relative;z-index:10;width:100%;max-width:400px;animation:card-in .6s cubic-bezier(0.16,1,0.3,1) both;}
+@keyframes card-in{from{opacity:0;transform:translateY(28px) scale(0.97);}to{opacity:1;transform:translateY(0) scale(1);}}
+.banner{background:linear-gradient(160deg,#0d1e38 0%,#0a1628 50%,#071020 100%);border:1px solid var(--border2);border-bottom:none;border-radius:20px 20px 0 0;padding:20px 22px 18px;display:flex;align-items:center;gap:13px;position:relative;overflow:hidden;}
+.banner-divider{position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent);opacity:.5;}
+.banner-icon{width:44px;height:44px;flex-shrink:0;background:linear-gradient(145deg,#0f2040,#1b3560);border:1.5px solid rgba(240,165,0,.4);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.35rem;box-shadow:0 0 18px rgba(240,165,0,.18);}
+.banner-name{font-family:var(--font-display);font-weight:700;font-size:1rem;letter-spacing:-.2px;}
+.banner-sub{font-size:.68rem;color:rgba(240,165,0,.75);margin-top:2px;}
+.card-body{background:var(--surface);-webkit-backdrop-filter:blur(40px) saturate(180%);backdrop-filter:blur(40px) saturate(180%);border:1px solid var(--border);border-top:none;border-radius:0 0 20px 20px;padding:26px 22px 22px;box-shadow:0 32px 80px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.03) inset;}
+.welcome-title{font-family:var(--font-display);font-size:1.3rem;font-weight:700;letter-spacing:-.3px;margin-bottom:3px;}
+.welcome-sub{font-size:.8rem;color:var(--text2);margin-bottom:22px;}
+.error-box{background:rgba(255,69,58,.1);border:1px solid rgba(255,69,58,.25);border-radius:10px;padding:10px 13px;font-size:.8rem;color:var(--red);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.fgroup{margin-bottom:14px;}
+.flabel{display:block;font-size:.65rem;font-weight:600;color:rgba(240,165,0,.8);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px;font-family:var(--font-mono);}
+.field-wrap{position:relative;}
+.field-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:.9rem;color:var(--text3);pointer-events:none;}
+.finput{width:100%;padding:11px 14px 11px 38px;background:var(--surface2);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:var(--font-body);font-size:.88rem;outline:none;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;}
+.finput::placeholder{color:var(--text3);}
+.finput:focus{border-color:rgba(240,165,0,.5);background:rgba(12,20,36,.9);box-shadow:0 0 0 3px rgba(240,165,0,.1);}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.btn-submit{width:100%;padding:12.5px;background:linear-gradient(160deg,#c88800,#f0a500 50%,#d49200);border:none;border-radius:12px;font-family:var(--font-display);font-size:.92rem;font-weight:700;letter-spacing:-.1px;color:#000;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 24px rgba(240,165,0,.28);transition:transform .18s cubic-bezier(0.34,1.56,0.64,1),box-shadow .18s,filter .18s;}
+.btn-submit:hover{filter:brightness(1.08);transform:translateY(-1.5px);box-shadow:0 8px 32px rgba(240,165,0,.38);}
+.btn-submit:active{transform:scale(0.98);}
+.secure-row{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:14px;font-size:.7rem;color:var(--text3);}
+.secure-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:live-pulse 2.2s ease infinite;}
+@keyframes live-pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(48,209,88,.5);}50%{opacity:.6;box-shadow:0 0 0 3px rgba(48,209,88,0);}}
+.dev-credit{text-align:center;margin-top:8px;font-family:var(--font-mono);font-size:.62rem;color:var(--text3);}
+.dev-credit strong{color:var(--text2);}
+.reg-row{text-align:center;margin-top:14px;font-size:.8rem;color:var(--text2);}
+.reg-row a{color:var(--amber);font-weight:600;text-decoration:none;}
+.page-footer{position:relative;z-index:10;margin-top:20px;text-align:center;font-size:.7rem;color:var(--text3);}
+.page-footer a{color:var(--amber);opacity:.7;text-decoration:none;font-weight:600;}
+</style>
 </head>
 <body>
-<div class="auth-page">
-  <div class="auth-bg"></div>
-  <div class="auth-grid"></div>
-  <div class="auth-card">
-    <div class="auth-logo">
-      <div class="brand-orb">🌐</div>
-      <div>
-        <div class="brand-name" style="font-family:'Anybody',sans-serif;font-weight:800;font-size:1.1rem;">PulseWorld</div>
-        <div class="brand-tagline" style="font-size:.6rem;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;">Global Intelligence Platform</div>
-      </div>
+<div class="bg-mesh"></div>
+<div class="bg-grid"></div>
+
+<div class="card-wrap">
+  <div class="banner">
+    <div class="banner-icon">🌐</div>
+    <div>
+      <div class="banner-name">PulseWorld</div>
+      <div class="banner-sub">Global Power &amp; Markets Intelligence</div>
     </div>
-    <div class="auth-title">Join the Grid</div>
-    <div class="auth-sub">Free access to global markets and power intelligence</div>
-    {% if error %}<div class="error-msg">{{ error }}</div>{% endif %}
-    <form method="POST">
-      <div class="form-group">
-        <label class="form-label">Full Name</label>
-        <input type="text" name="name" class="form-input" placeholder="Your name" required/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Email</label>
-        <input type="email" name="email" class="form-input" placeholder="analyst@example.com" required/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Password</label>
-        <input type="password" name="password" class="form-input" placeholder="••••••••" required minlength="6"/>
-      </div>
-      <button type="submit" class="btn btn-primary btn-full mt-8">Create Account →</button>
-    </form>
-    <div class="auth-footer">
-      Already registered? <a href="{{ url_for('login') }}">Sign in</a>
-    </div>
+    <div class="banner-divider"></div>
   </div>
+  <div class="card-body">
+    <div class="welcome-title">Join the Grid</div>
+    <div class="welcome-sub">Create your free intelligence analyst account</div>
+    {% if error %}<div class="error-box">⚠ {{ error }}</div>{% endif %}
+    <form method="POST">
+      <div class="fgroup">
+        <label class="flabel">Full Name</label>
+        <div class="field-wrap">
+          <span class="field-icon">👤</span>
+          <input type="text" name="name" class="finput" placeholder="Your full name" required/>
+        </div>
+      </div>
+      <div class="fgroup">
+        <label class="flabel">Email Address</label>
+        <div class="field-wrap">
+          <span class="field-icon">✉</span>
+          <input type="email" name="email" class="finput" placeholder="analyst@example.com" required/>
+        </div>
+      </div>
+      <div class="fgroup">
+        <label class="flabel">Password</label>
+        <div class="field-wrap">
+          <span class="field-icon">🔒</span>
+          <input type="password" name="password" class="finput" placeholder="Min. 6 characters" required minlength="6"/>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit">→ &nbsp;Create Account</button>
+    </form>
+    <div class="secure-row"><div class="secure-dot"></div> Secured by 256-bit TLS encryption</div>
+    <div class="dev-credit"><strong>Justine Villarosa</strong> · Software Engineer</div>
+    <div class="reg-row">Already registered? <a href="{{ url_for('login') }}">Sign in</a></div>
+  </div>
+</div>
+
+<div class="page-footer">
+  Need help? Contact our Developer: <a href="mailto:justine.villarosa@unc.edu.ph">Justine Villarosa</a>
 </div>
 </body>
 </html>
